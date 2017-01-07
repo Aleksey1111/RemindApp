@@ -11,31 +11,46 @@ import android.view.SurfaceHolder;
 public class DrawThread extends Thread{
     public static final String TAG= "Log";
 
-    public boolean running;
-    private Canvas canvas;
     private SurfaceHolder surfaceHolder;
     private DrawView drawView;
+    private boolean running;
+    public void setRunning(boolean running){
+        this.running= running;
 
-    public DrawThread(SurfaceHolder surfaceHolder, DrawView drawView) {
+    }
+
+    public DrawThread(SurfaceHolder surfaceHolder, DrawView drawView){
         super();
-        this.surfaceHolder = surfaceHolder;
-        this.drawView = drawView;
+        this.surfaceHolder= surfaceHolder;
+        this.drawView= drawView;
     }
-    public  void setRunning(boolean running){
-        this.running = running;
-    }
-    public  void  run(){
-        long tickCount= 0;
+
+    public void run(){
+        Canvas canvas;
         Log.d(TAG,"Starting game loop");
         while(running){
-            tickCount++;
+            canvas=null;
+// пытаемся заблокировать canvas
+// для изменение картинки на поверхности
+            try{
+                canvas= this.surfaceHolder.lockCanvas();
+                synchronized(surfaceHolder){
 // здесь будет обновляться состояние игры
 // и формироваться кадр для вывода на экран
-//Log.d(TAG,"Game loop executed "+ tickCount+" times");
-        }
-        Log.d(TAG,"Game loop executed "+ tickCount+" times");
-    }
-    }
+                 this.drawView.draw(canvas);//Вызываем метод для рисования
+                }
+            } finally {
+// в случае ошибки, плоскость не перешла в
+//требуемое состояние
+                if (canvas != null) {
+                    surfaceHolder.unlockCanvasAndPost(canvas);
+                }
+            }}}
+
+
+}
+
+
 
 
 

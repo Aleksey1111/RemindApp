@@ -2,6 +2,7 @@ package com.example.olya.remind;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -19,11 +20,15 @@ import android.view.View;
  */
 public class DrawView extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = "Log";
-    private DrawThread thread;
+    public DrawThread thread;
+    private Droid droid;
 
     public DrawView(Context context) {
         super(context);
         getHolder().addCallback(this);
+
+        droid=new Droid(BitmapFactory.decodeResource(getResources(), R.mipmap.droid_1),50,50);
+
         thread = new DrawThread(getHolder(),this);
 
         setFocusable(true);
@@ -54,25 +59,45 @@ boolean retry = true;
         }
     }
 
+
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == event.ACTION_DOWN) {
-            if (event.getY() > getHeight() - 50) {
+        if(event.getAction()== MotionEvent.ACTION_DOWN){
+// вызываем метод handleActionDown, куда передаем координаты касания
+            droid.handleActionDown((int)event.getX(),(int)event.getY());
+
+// если щелчок по нижней области экрана, то выходим
+            if(event.getY()> getHeight()-50){
                 thread.setRunning(false);
-                ((Activity) getContext()).finish();
-
-        } else {
-            Log.d(TAG, "Coords x: " + event.getX() + ",y: " + event.getY());
-
+                ((Activity)getContext()).finish();
+            }else{
+                Log.d(TAG,"Coords: x="+ event.getX()+",y="+ event.getY());
+            }
+        }if(event.getAction()== MotionEvent.ACTION_MOVE){
+// перемещение
+            if(droid.isTouched()){
+// робот находится в состоянии перетаскивания,
+// поэтому изменяем его координаты
+                droid.setX((int)event.getX());
+                droid.setY((int)event.getY());
+            }
+        }if(event.getAction()== MotionEvent.ACTION_UP){
+// Обрабатываем отпускание
+            if(droid.isTouched()){
+                droid.setTouched(false);
+            }
         }
+        return true;
     }
-            return super.onTouchEvent(event);
-        }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    public void draw(Canvas canvas) {
 
         //DrawThread.onDraw(canvas);
-         canvas.drawColor(Color.RED);
+        canvas.drawColor(Color.BLACK);
+// Вызываем метод, который выводит рисунок робота
+        droid.draw(canvas);
     }
+
 }
